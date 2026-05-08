@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -8,8 +9,11 @@ import (
 )
 
 func main() {
+	runs := flag.Int("runs", 15, "number of CI runs to display in the right pane")
+	flag.Parse()
+
 	p := tea.NewProgram(
-		NewModel(),
+		NewModel(*runs),
 		tea.WithAltScreen(),
 	)
 	if _, err := p.Run(); err != nil {

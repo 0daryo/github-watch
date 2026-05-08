@@ -11,7 +11,6 @@ import (
 const (
 	prCIRefresh      = 15 * time.Second
 	rateLimitRefresh = 30 * time.Second
-	maxRuns          = 15
 )
 
 // Pane represents which pane has focus.
@@ -50,15 +49,16 @@ type Model struct {
 	lastUpd     time.Time
 	loadingRuns bool
 	loadingPRs  bool
+	maxRuns     int
 }
 
-func NewModel() Model {
-	return Model{loadingRuns: true, loadingPRs: true, pane: PanePR}
+func NewModel(maxRuns int) Model {
+	return Model{loadingRuns: true, loadingPRs: true, pane: PanePR, maxRuns: maxRuns}
 }
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		fetchPRCI(),
+		fetchPRCI(m.maxRuns),
 		fetchRateLimit(),
 		prCITickCmd(),
 		rateLimitTickCmd(),
@@ -74,7 +74,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			m.loadingRuns = true
 			m.loadingPRs = true
-			return m, tea.Batch(fetchPRCI(), fetchRateLimit())
+			return m, tea.Batch(fetchPRCI(m.maxRuns), fetchRateLimit())
 		case "tab", "h", "l", "left", "right":
 			if m.pane == PanePR {
 				m.pane = PaneCI
@@ -112,7 +112,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case prCITickMsg:
 		m.loadingRuns = true
 		m.loadingPRs = true
-		return m, tea.Batch(fetchPRCI(), prCITickCmd())
+		return m, tea.Batch(fetchPRCI(m.maxRuns), prCITickCmd())
 
 	case rateLimitTickMsg:
 		return m, tea.Batch(fetchRateLimit(), rateLimitTickCmd())
@@ -184,7 +184,7 @@ func rateLimitTickCmd() tea.Cmd {
 	})
 }
 
-func fetchPRCI() tea.Cmd {
+func fetchPRCI(maxRuns int) tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg {
 			runs, err := FetchRuns(maxRuns)
