@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	prCIRefresh      = 60 * time.Second
+	prCIRefresh      = 120 * time.Second
 	rateLimitRefresh = 30 * time.Second
 )
 
